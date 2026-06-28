@@ -1,7 +1,7 @@
 import * as Fs from "node:fs";
 import * as Path from "node:path";
 
-const sourceDir = Path.join("effect", "docs");
+const packagesDir = Path.join("effect", "packages");
 const targetDir = Path.join("src", "content", "docs");
 
 function copyDirRecursive(src, dest, transformFile) {
@@ -21,6 +21,82 @@ function copyDirRecursive(src, dest, transformFile) {
       }
     }
   }
+}
+
+function findPackages(dir = packagesDir) {
+  const results = [];
+  if (!Fs.existsSync(dir)) {
+    return results;
+  }
+  const list = Fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of list) {
+    if (entry.isDirectory()) {
+      const fullPath = Path.join(dir, entry.name);
+      if (Fs.existsSync(Path.join(fullPath, "docs/modules"))) {
+        results.push(Path.relative(packagesDir, fullPath));
+      } else {
+        results.push(...findPackages(fullPath));
+      }
+    }
+  }
+  return results;
+}
+
+function pkgName(pkg) {
+  const packageJsonPath = Path.join(packagesDir, pkg, "package.json");
+  if (!Fs.existsSync(packageJsonPath)) {
+    return pkg;
+  }
+  const packageJson = Fs.readFileSync(packageJsonPath, "utf8");
+  return JSON.parse(packageJson).name;
+}
+
+function copyPackageDocs(pkg, name) {
+  const src = Path.join(packagesDir, pkg, "docs/modules");
+  const dest = Path.join(targetDir, pkg);
+  if (!Fs.existsSync(src)) {
+    return;
+  }
+  const files = Fs.readdirSync(src, { withFileTypes: true });
+
+  function handleFiles(root, files) {
+    for (const file of files) {
+      const path = Path.join(src, root, file.name);
+      const destPath = Path.join(dest, root, file.name);
+
+      if (file.isDirectory()) {
+        Fs.mkdirSync(destPath, { recursive: true });
+        handleFiles(Path.join(root, file.name), Fs.readdirSync(path, { withFileTypes: true }));
+        continue;
+      }
+
+      if (file.name.endsWith(".md") || file.name.endsWith(".mdx")) {
+        const content = Fs.readFileSync(path, "utf8").replace(
+          /^parent: Modules$/m,
+          `parent: "${name}"`
+        );
+        Fs.writeFileSync(destPath, content, "utf8");
+      } else {
+        Fs.copyFileSync(path, destPath);
+      }
+    }
+  }
+
+  Fs.rmSync(dest, { recursive: true, force: true });
+  Fs.mkdirSync(dest, { recursive: true });
+  handleFiles("", files);
+}
+
+function generateIndex(pkg, name, order) {
+  const content = `---
+title: "${name}"
+has_children: true
+permalink: /docs/${pkg}
+nav_order: ${order}
+---
+`;
+
+  Fs.writeFileSync(Path.join(targetDir, pkg, "index.md"), content, "utf8");
 }
 
 function transformMarkdownFile(filePath, fileName) {
@@ -45,24 +121,21 @@ function transformMarkdownFile(filePath, fileName) {
 }
 
 function copyDocs() {
-  if (!Fs.existsSync(sourceDir)) {
+  if (!Fs.existsSync(packagesDir)) {
     console.error(
-      `Source directory ${sourceDir} does not exist. Please run docgen in the submodule first.`,
+      `Submodule packages directory ${packagesDir} does not exist. Please make sure the submodule is checked out.`,
     );
     process.exit(1);
   }
 
-  const packages = Fs.readdirSync(sourceDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
+  const packages = findPackages().sort();
 
-  for (const pkg of packages) {
-    const srcPath = Path.join(sourceDir, pkg);
-    const destPath = Path.join(targetDir, pkg);
-
-    console.log(`Copying ${pkg} docs to ${destPath}...`);
-    Fs.rmSync(destPath, { recursive: true, force: true });
-    copyDirRecursive(srcPath, destPath);
+  for (let i = 0; i < packages.length; i++) {
+    const pkg = packages[i];
+    const name = pkgName(pkg);
+    console.log(`Copying ${pkg} docs...`);
+    copyPackageDocs(pkg, name);
+    generateIndex(pkg, name, i + 2);
   }
 
   // Copy migration docs

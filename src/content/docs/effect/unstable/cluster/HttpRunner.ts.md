@@ -140,7 +140,7 @@ Default HTTP runner client protocol layer using path `/`.
 declare const layerClientProtocolHttpDefault: Layer.Layer<
   Runners.RpcClientProtocol,
   never,
-  HttpClient.HttpClient | RpcSerialization.RpcSerialization
+  RpcSerialization.RpcSerialization | HttpClient.HttpClient
 >
 ```
 
@@ -204,8 +204,8 @@ over HTTP.
 declare const layerHttp: Layer.Layer<
   Sharding.Sharding | Runners.Runners,
   never,
-  | HttpClient.HttpClient
   | RpcSerialization.RpcSerialization
+  | HttpClient.HttpClient
   | HttpServer.HttpServer
   | MessageStorage
   | RunnerStorage
@@ -238,8 +238,8 @@ HTTP routes.
 declare const layerHttpClientOnly: Layer.Layer<
   Sharding.Sharding | Runners.Runners,
   never,
-  | HttpClient.HttpClient
   | RpcSerialization.RpcSerialization
+  | HttpClient.HttpClient
   | MessageStorage
   | RunnerStorage
   | ShardingConfig.ShardingConfig
