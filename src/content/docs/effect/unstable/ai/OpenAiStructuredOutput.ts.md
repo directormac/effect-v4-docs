@@ -1,0 +1,69 @@
+---
+title: OpenAiStructuredOutput.ts
+nav_order: 152
+parent: "effect"
+---
+
+## OpenAiStructuredOutput.ts overview
+
+Adapts Effect schemas for OpenAI structured output.
+
+OpenAI structured output accepts only a subset of JSON Schema. This module
+converts an Effect `Schema.Codec` into a provider-compatible JSON Schema and
+a matching codec for decoding the model response back into the original
+application type. When possible, unsupported schema shapes are rewritten into
+supported ones; schema kinds that cannot be represented safely fail during
+conversion.
+
+Since v4.0.0
+
+---
+
+## Exports Grouped by Category
+
+- [Codec Transformation](#codec-transformation)
+  - [toCodecOpenAI](#tocodecopenai)
+
+---
+
+# Codec Transformation
+
+## toCodecOpenAI
+
+Converts a `Schema.Codec` to OpenAI structured-output JSON Schema and a
+matching codec for model output.
+
+**When to use**
+
+Use when you send Effect Schema-backed structured output requests to OpenAI
+and need provider-compatible JSON Schema without losing the decoded
+application type.
+
+**Details**
+
+Returns the JSON Schema to include in the request and the codec to use when
+decoding the model response. If the input schema already fits OpenAI's
+supported JSON Schema subset, the original codec is returned unchanged.
+
+**Gotchas**
+
+- Some schemas use a provider-safe encoded shape: tuples become objects with
+  numeric string keys, records become arrays of `[key, value]` pairs, and
+  optional properties become required nullable properties.
+- `oneOf` unions are emitted as `anyOf` unions.
+- Regex patterns from multiple filters are merged into one `pattern` because
+  OpenAI structured output does not support `allOf`.
+- Unsupported schema kinds throw during conversion instead of producing a
+  lossy schema.
+
+**Signature**
+
+```ts
+declare const toCodecOpenAI: <T, E, RD, RE>(
+  schema: Schema.ConstraintCodec<T, E, RD, RE>
+) => { codec: Schema.ConstraintCodec<T, unknown, RD, RE>; jsonSchema: JsonSchema.JsonSchema }
+```
+
+[Source](https://github.com/Effect-TS/effect-smol/tree/main/packages/effect/src/OpenAiStructuredOutput.ts#L53)
+
+Since v4.0.0

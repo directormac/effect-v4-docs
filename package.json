@@ -1,13 +1,14 @@
 {
   "name": "effect-v4-docs",
-  "type": "module",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
+    "dev": "NODE_OPTIONS='--max-old-space-size=8192' astro dev",
+    "start": "NODE_OPTIONS='--max-old-space-size=8192' astro dev",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "docgen": "bun --cwd effect docgen && node scripts/copy-docs.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.41.1",

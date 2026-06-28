@@ -1,0 +1,126 @@
+---
+title: BunClusterSocket.ts
+nav_order: 3
+parent: "@effect/platform-bun"
+---
+
+## BunClusterSocket.ts overview
+
+Bun socket layers for Effect Cluster runners.
+
+The main `layer` builds a sharding layer for socket transport, choosing
+serialization, runner health checks, runner storage, message storage, and
+optional client-only mode from the supplied options. This module also
+re-exports the shared socket client and server protocol layers and provides
+`layerK8sHttpClient` for Kubernetes runner health checks.
+
+Since v4.0.0
+
+---
+
+## Exports Grouped by Category
+
+- [layers](#layers)
+  - [layer](#layer)
+  - [layerK8sHttpClient](#layerk8shttpclient)
+- [re-exports](#re-exports)
+  - [layerClientProtocol](#layerclientprotocol)
+  - [layerSocketServer](#layersocketserver)
+
+---
+
+# layers
+
+## layer
+
+Creates Bun socket cluster layers, configuring serialization, storage, runner health, and optional client-only mode.
+
+**Signature**
+
+```ts
+declare const layer: <
+  const ClientOnly extends boolean = false,
+  const Storage extends "local" | "sql" | "byo" = never
+>(options?: {
+  readonly serialization?: "msgpack" | "ndjson" | undefined
+  readonly clientOnly?: ClientOnly | undefined
+  readonly storage?: Storage | undefined
+  readonly runnerHealth?: "ping" | "k8s" | undefined
+  readonly runnerHealthK8s?:
+    | { readonly namespace?: string | undefined; readonly labelSelector?: string | undefined }
+    | undefined
+  readonly shardingConfig?: Partial<ShardingConfig.ShardingConfig["Service"]> | undefined
+}) => ClientOnly extends true
+  ? Layer.Layer<
+      Sharding | Runners.Runners | ("byo" extends Storage ? never : MessageStorage.MessageStorage),
+      Config.ConfigError,
+      "local" extends Storage
+        ? never
+        : "byo" extends Storage
+          ? MessageStorage.MessageStorage | RunnerStorage.RunnerStorage
+          : SqlClient
+    >
+  : Layer.Layer<
+      Sharding | Runners.Runners | ("byo" extends Storage ? never : MessageStorage.MessageStorage),
+      SocketServer.SocketServerError | Config.ConfigError,
+      "local" extends Storage
+        ? never
+        : "byo" extends Storage
+          ? MessageStorage.MessageStorage | RunnerStorage.RunnerStorage
+          : SqlClient
+    >
+```
+
+[Source](https://github.com/Effect-TS/effect/tree/main/packages/platform-bun/src/BunClusterSocket.ts#L58)
+
+Since v4.0.0
+
+## layerK8sHttpClient
+
+Layer that provides `K8sHttpClient`, using the Kubernetes service-account CA certificate when it is available.
+
+**Signature**
+
+```ts
+declare const layerK8sHttpClient: Layer.Layer<K8sHttpClient.K8sHttpClient, never, never>
+```
+
+[Source](https://github.com/Effect-TS/effect/tree/main/packages/platform-bun/src/BunClusterSocket.ts#L134)
+
+Since v4.0.0
+
+# re-exports
+
+## layerClientProtocol
+
+Provides the cluster `RpcClientProtocol` using the shared socket client
+implementation.
+
+**Signature**
+
+```ts
+declare const layerClientProtocol: Layer.Layer<Runners.RpcClientProtocol, never, RpcSerialization.RpcSerialization>
+```
+
+[Source](https://github.com/Effect-TS/effect/tree/main/packages/platform-bun/src/BunClusterSocket.ts#L41)
+
+Since v4.0.0
+
+## layerSocketServer
+
+Provides the socket server used by Bun cluster runners through the shared
+socket server implementation.
+
+**Signature**
+
+```ts
+declare const layerSocketServer: Layer.Layer<
+  SocketServer.SocketServer,
+  SocketServer.SocketServerError,
+  ShardingConfig.ShardingConfig
+>
+```
+
+[Source](https://github.com/Effect-TS/effect/tree/main/packages/platform-bun/src/BunClusterSocket.ts#L49)
+
+Since v4.0.0
