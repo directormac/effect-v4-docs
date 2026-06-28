@@ -1,13 +1,20 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import starlightChangelogs from "starlight-changelogs";
+import starlightChangelogs, { makeChangelogsSidebarLinks } from "starlight-changelogs";
+import starlightCatppuccin from "@catppuccin/starlight";
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
     starlight({
-      plugins: [starlightChangelogs()],
+      plugins: [
+        starlightCatppuccin({
+          dark: { flavor: "macchiato", accent: "mauve" },
+          light: { flavor: "latte", accent: "mauve" },
+        }),
+        starlightChangelogs(),
+      ],
       expressiveCode: true,
       prerender: true,
       pagefind: true,
@@ -17,8 +24,21 @@ export default defineConfig({
       ],
       sidebar: [
         {
+          label: "changelogs",
+          collapsed: true,
+          items: [
+            ...makeChangelogsSidebarLinks([
+              { type: "all", base: "changelog/effect", label: "effect" },
+            ]),
+          ],
+        },
+        {
           label: "migration",
           items: [{ autogenerate: { directory: "migration", collapsed: true } }],
+        },
+        {
+          label: "ai-docs",
+          items: [{ autogenerate: { directory: "ai-docs", collapsed: true } }],
         },
         {
           label: "guides",

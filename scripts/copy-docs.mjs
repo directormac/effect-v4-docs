@@ -156,15 +156,7 @@ function copyDocs() {
     copyDirRecursive(cookbooksSrc, cookbooksDest, transformMarkdownFile);
   }
 
-  // Copy LLMS.md
-  const llmsSrc = Path.join("effect", "LLMS.md");
-  const llmsDest = Path.join(targetDir, "llms.md");
-  if (Fs.existsSync(llmsSrc)) {
-    console.log(`Copying LLMS.md from ${llmsSrc} to ${llmsDest}...`);
-    Fs.rmSync(llmsDest, { force: true });
-    Fs.copyFileSync(llmsSrc, llmsDest);
-    transformMarkdownFile(llmsDest, "llms.md");
-  }
+
 
   const guides = ["CONFIG.md", "HTTPAPI.md", "MCP.md", "OPTIC.md", "SCHEMA.md"];
 
