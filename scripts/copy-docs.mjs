@@ -73,7 +73,7 @@ function copyPackageDocs(pkg, name) {
       if (file.name.endsWith(".md") || file.name.endsWith(".mdx")) {
         const content = Fs.readFileSync(path, "utf8").replace(
           /^parent: Modules$/m,
-          `parent: "${name}"`
+          `parent: "${name}"`,
         );
         Fs.writeFileSync(destPath, content, "utf8");
       } else {
@@ -158,12 +158,26 @@ function copyDocs() {
 
   // Copy LLMS.md
   const llmsSrc = Path.join("effect", "LLMS.md");
-  const llmsDest = Path.join(targetDir, "LLMS.md");
+  const llmsDest = Path.join(targetDir, "llms.md");
   if (Fs.existsSync(llmsSrc)) {
     console.log(`Copying LLMS.md from ${llmsSrc} to ${llmsDest}...`);
     Fs.rmSync(llmsDest, { force: true });
     Fs.copyFileSync(llmsSrc, llmsDest);
-    transformMarkdownFile(llmsDest, "LLMS.md");
+    transformMarkdownFile(llmsDest, "llms.md");
+  }
+
+  const guides = ["CONFIG.md", "HTTPAPI.md", "MCP.md", "OPTIC.md", "SCHEMA.md"];
+
+  for (const guide of guides) {
+    const guideSrc = Path.join("effect", "packages/effect", guide);
+    const guideDest = Path.join(targetDir, "guides", guide.toLowerCase());
+    if (Fs.existsSync(guideSrc)) {
+      console.log(`Copying ${guide} from ${guideSrc} to ${guideDest}...`);
+      Fs.rmSync(guideDest, { force: true });
+      Fs.mkdirSync(Path.dirname(guideDest), { recursive: true });
+      Fs.copyFileSync(guideSrc, guideDest);
+      transformMarkdownFile(guideDest, guide.toLowerCase());
+    }
   }
 
   console.log("Docs copied successfully!");
